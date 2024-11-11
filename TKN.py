@@ -13,6 +13,32 @@ transactions = {
 
 profits = {'a': 4, 'b': 3, 'c': 1, 'd': -1, 'e': 2}
 
+# transactions={
+#     't1': {'a': 2, 'b': 2, 'd': 1, 'e': 3, 'f': 2, 'g': 1},
+#     't2': {'b': 1, 'c': 5},
+#     't3': {'b': 2, 'c': 1, 'd': 3, 'e': 2, 'f': 1},
+#     't4': {'c': 2, 'd': 1, 'e': 3},
+#     't5': {'a': 2, 'f': 3},
+#     't6': {'a': 2, 'b': 1, 'c': 4, 'd': 2, 'e': 1, 'f': 3, 'g': 1},
+#     't7': {'b': 3, 'c': 2, 'e': 2}
+# }
+# profits={
+#     'a': 4, 'b': 3, 'c': 1, 'd': -1, 'e': 2, 'f': -1, 'g': -2
+# }
+
+# transactions={
+#     't1': {'a': 2, 'b': 3, 'd': 1, 'h': 1},
+#     't2': {'a': 2, 'c': 4, 'e': 2, 'h': 3},
+#     't3': {'b': 6, 'c': 3, 'd': 1, 'e': 3, 'f': 2},
+#     't4': {'a': 4, 'b': 3, 'c': 3, 'g': 2},
+#     't5': {'b': 4, 'd': 4, 'e': 1, 'g': 2, 'h': 1}
+# }
+
+# profits={
+#     'a': 2, 'b': 1, 'd': 3, 'h': -1, 'c': 1, 'e': -1, 'f': 5, 'g': -1
+# }
+
+
 def calculate_priu(transactions, profits):
     priu_dict = {}
     for transaction in transactions.values():
@@ -434,53 +460,38 @@ def search(alpha, prefix_utility, eta, projected_dataset, primary_items, seconda
     for z in primary_items:
         # Khởi tạo beta là sự mở rộng của alpha với z
         beta = alpha + [z]
-        print(f"Beta is {beta}")
         # Tính utility của beta và tạo dataset beta - D
         beta_utility=calculate_utility_all(projected_dataset, beta)
 
         # Kiểm tra nếu utility của beta >= minUtil
-        print(f"U-Beta is {beta_utility} and minU is {minUtil}")
         if beta_utility >= minUtil:
             # Thêm beta vào hàng đợi ưu tiên TKHQ
-            print(f"Beta add {beta}")
-
             TKHQ.append((beta, beta_utility))
             TKHQ = sorted(TKHQ, key=lambda x: x[1], reverse=True)  # Sắp xếp TKHQ theo utility giảm dần
-            print(TKHQ)
             # Nếu TKHQ có k phần tử, nâng minUtil lên utility của phần tử cao nhất
-            # if len(TKHQ) > k:
-            #     TKHQ.pop()  # Xóa phần tử có utility thấp nhất
+            if len(TKHQ) > k:
+                TKHQ.pop()  # Xóa phần tử có utility thấp nhất
             if len(TKHQ) == k:
                 minUtil = TKHQ[-1][1]  # minUtil là utility của phần tử nhỏ nhất trong TKHQ
         w=None
-        print(f"Z is {z}")
-        print(f"Secondary is {secondary_items}")
         # Tìm item tiếp theo `w` trong `secondary_items` (không dùng tìm kiếm nhị phân)
         zindex=secondary_items.index(z)
         windex= zindex+1
         if(windex>len(secondary_items)):
             continue
         # Nếu utility của beta < minUtil và w là item tiêu cực
-        print(f"w is {w}")
         if beta_utility < minUtil and w in eta:
             continue  # Bỏ qua và tiếp tục vòng lặp tiếp theo
         remaining_secondary_items = secondary_items[windex::]
-        print(f"Remain is {remaining_secondary_items}")
         # Xác định primary(beta) và secondary(beta)
         # Tính PSU và PLU của beta và các item còn lại trong secondary_items
         psu_beta_w = {w: calculate_rsu(projected_dataset,beta, w) for w in remaining_secondary_items}
         plu_beta_w = {w: calculate_rlu(projected_dataset,beta, w,ptwu) for w in remaining_secondary_items}
-        print(f"PSU is {psu_beta_w}")
         # Xác định primary(beta) và secondary(beta)
         primary_beta = [w for w in remaining_secondary_items if psu_beta_w[w] >= minUtil]
         secondary_beta = [w for w in remaining_secondary_items if plu_beta_w[w] >= minUtil]
-        print(f"Primary is {primary_items}")
-        print(f"Secondary is {secondary_items}")
-
         # Đệ quy gọi hàm search để mở rộng beta với các item trong primary_items theo DFS
         search(beta, beta_utility, eta, projected_dataset, primary_beta, secondary_beta, minUtil,ptwu,k)
-        print(f"Run {z}")
-
 
 def TKN_algorithm(D,k):
 #    Input: D: A transation dataset, k: the required number of HUIs.
@@ -557,7 +568,6 @@ def TKN_algorithm(D,k):
     primary_items=[item for item, psu in PSU_table.items() if psu >=PLIU_LB]
 
     print(primary_items)
-    # print(calculate_rlu(db_transform,['a','b'],'b',ptwu))
     topkHUIs=search(Alpha,0,g,db_transform,primary_items,sorted_secondary_a,PLIU_LB,ptwu,k)
     print("Result:",TKHQ[0:k])
 k = 4
