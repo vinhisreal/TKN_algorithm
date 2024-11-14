@@ -371,7 +371,6 @@ def calculate_rlu(sorted_database, X, target_item, ptwu):
                 rlu += utility_of_X + rru  # Sum of target item utility and remaining utilities
     return rlu
 
-
 def transaction_projection(transaction, itemset):
     """
     Project the given transaction using the specified itemset.
@@ -505,9 +504,6 @@ def TKN_algorithm(D,k):
     # Define threshold to classify promising negative items
     g = {item for item, utility in priu_dict.items() if utility < 0}
 
-    # Print out the promising negative items
-    print("Promising Negative Items (g):", g)
-
     ptwu=calculate_ptwu(transactions,profits)
 
     # Bước 5: Tính toán PRIU cho tất cả các items có giá trị PRIU dương và lưu vào PRIU_list
@@ -516,59 +512,43 @@ def TKN_algorithm(D,k):
 
     # Bước 6
     priu_list = {item: priu for item, priu in priu_dict.items() if priu >= 0 and item not in g}
-    print("PRIU List cho các items dương:", priu_list)
 
     # Bước 7: Áp dụng chiến lược PRIU để nâng minUtil lên giá trị cao thứ k trong PRIU_list
     minUtil = priu_strategy(priu_list, k)
-    print("minUtil sau khi áp dụng chiến lược PRIU:", minUtil)
 
     # Bước 9: Tính secondary(a) cho các item thỏa mãn điều kiện Ptwu >= minUtil
     secondary_a = {item for item, ptwu_value in ptwu.items() if ptwu_value >= minUtil}
-    print("Secondary(a):", secondary_a)
 
      # Bước 9: Sắp xếp secondary(a) theo thứ tự tổng quát
     sorted_secondary_a = sort_secondary_a_by_total_order(secondary_a, ptwu, profits)
-    print("Secondary(a) after sorting by total order:", sorted_secondary_a)
 
     # Bước 10: Quét D và loại bỏ các item không thuộc Secondary(a)
     filtered_transactions = filter_transactions_by_secondary_a(D, sorted_secondary_a)
-    print("Filtered Transactions after removing items not in Secondary(a):", filtered_transactions)
 
     # Step 11: Sort transaction 
     sorted_transactions = sort_transaction_items_by_total_order(filtered_transactions, sorted_secondary_a)
-    print("Sorted Transactions:", sorted_transactions)
-
 
     # Chuyển db nhân cho profit luôn
     db_transform=transform_to_utilities(sorted_transactions,profits)
-    print("DB_Transform: ",db_transform)
 
     # Step 12: Caculate PSU   
     PSU_table = {}
     for item in sorted_secondary_a:
         PSU_table[item] = calculate_rsu(db_transform,Alpha,item)
 
-    for item, psu in PSU_table.items():
-        print(f"Item {item}: PSU = {psu}")
-
     # Step 13: Build LIUS
     LIUS = LIUS_Build_contiguous(db_transform,priu_list)
-    print("LIUS:", LIUS)
 
     # Step 14:
     PLIU_E,PIQU_LIU = PLIU_E_strategy(LIUS,minUtil,k)
-    print("PLIU_E: ", PLIU_E)
-    print("PIQU_LIU: ", PIQU_LIU)
-    print(f"PSU=",calculate_rsu(db_transform,['b','c','e'],'d'))
+
     # Step 15:
     PLIU_LB=PLIU_LB_strategy(LIUS,priu_list,PIQU_LIU,k,PLIU_E)
-    print("PLIU_LB: ", PLIU_LB)
 
     # Step 16: Identify Primary items based on PSU
     primary_items=[item for item, psu in PSU_table.items() if psu >=PLIU_LB]
 
-    print(primary_items)
     topkHUIs=search(Alpha,0,g,db_transform,primary_items,sorted_secondary_a,PLIU_LB,ptwu,k)
     print("Result:",TKHQ[0:k])
 k = 4
-ptwu = TKN_algorithm(transactions, k)
+result = TKN_algorithm(transactions, k)
